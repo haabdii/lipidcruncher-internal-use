@@ -81,7 +81,7 @@ class Experiment:
         
         self.full_samples_list = [sample for sample in self.full_samples_list if sample not in a_list_of_bad_samples]
         self.extensive_conditions_list = [condition for index, condition in enumerate(self.extensive_conditions_list) if index not in bad_samples_index_list]
-        self.conditions_list = list(set(self.extensive_conditions_list))
+        self.conditions_list = [condition for condition in self.conditions_list if condition in self.extensive_conditions_list]
         self.n_conditions = len(self.conditions_list)
         self.number_of_samples_list = reconstruct_number_of_samples_list()
         self.aggregate_number_of_samples_list = self.create_aggregate_number_of_samples_list(self.number_of_samples_list)
