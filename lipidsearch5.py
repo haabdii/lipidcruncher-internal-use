@@ -505,7 +505,6 @@ if lipid_search is not None:
                     st.write(latext)
                     
                     if len([x for x in experiment.number_of_samples_list if x>1]) > 1:
-                        st.write(experiment)
                         control_condition = st.selectbox('pick the control condition', \
                                                          [condition for index, condition in enumerate(experiment.conditions_list) if experiment.number_of_samples_list[index] > 1], 0)
                         experimental_condition = st.selectbox('Pick the experimental condition', \
