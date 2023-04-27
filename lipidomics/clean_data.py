@@ -96,7 +96,7 @@ class CleanData:
                 clean_df = pd.concat([clean_df, isolated_df], axis=0)
                     
             clean_df = clean_df[['LipidMolec', 'ClassKey', 'CalcMass', 'BaseRt'] + \
-                           ['MeanArea[' + sample + ']' for sample in self.name_df['old name']]]
+                           ['MeanArea[' + sample + ']' for sample in self.experiment.full_samples_list]]
             clean_df.reset_index(drop = True, inplace = True)
             return clean_df 
         

@@ -1,5 +1,6 @@
 import streamlit as st 
 import pandas as pd
+import numpy as np
 
 class NormalizeData:
     
@@ -85,5 +86,7 @@ class NormalizeData:
         norm_df = create_normalized_df(norm_df)
         norm_df.reset_index(inplace=True)
         norm_df.drop('index', axis=1, inplace=True)
+        norm_df = norm_df.fillna(0)
+        norm_df.replace([np.inf, -np.inf], 0, inplace=True)
         st.write(norm_df)
         return norm_df 

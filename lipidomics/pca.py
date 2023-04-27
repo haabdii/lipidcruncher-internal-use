@@ -4,6 +4,7 @@ from sklearn.preprocessing import scale # Data scaling
 from sklearn import decomposition # PCA
 from bokeh.plotting import figure
 from bokeh.models import ColumnDataSource, HoverTool
+from numpy import inf
 
 class PCA:
     
