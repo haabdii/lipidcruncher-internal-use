@@ -35,7 +35,7 @@ class CleanData:
         # removes the datapoint if 'TotalGrade' = C or D
         @st.cache
         def apply_filter(a_df):
-            return a_df[a_df['TotalGrade'].isin(['A', 'B'])]
+            return a_df[a_df['TotalGrade'].isin(['A', 'B', 'C'])]
         
         filtered_df = apply_filter(df)
         
@@ -86,14 +86,27 @@ class CleanData:
         def select_AUC(a_df):
             clean_df = pd.DataFrame(columns = ['LipidMolec', 'ClassKey', 'CalcMass', 'BaseRt', 'TotalSmpIDRate(%)'] + \
                                     ['MeanArea[' + sample + ']' for sample in self.experiment.full_samples_list])
-            for lipid in a_df['LipidMolec'].unique():
-                isolated_df = a_df[a_df['LipidMolec'] == lipid] # isolates all datapoints corresponding to the current lipid 
+            temp_df = a_df[a_df['TotalGrade'].isin(['A', 'B'])]
+            for lipid in temp_df['LipidMolec'].unique():
+                isolated_df = temp_df[temp_df['LipidMolec'] == lipid] # isolates all datapoints corresponding to the current lipid 
                 max_peak_quality = max(isolated_df['TotalSmpIDRate(%)'].values)
                 isolated_df = isolated_df[isolated_df['TotalSmpIDRate(%)'] == max_peak_quality]
                 isolated_df = isolated_df.iloc[:1]
                 isolated_df = isolated_df[['LipidMolec', 'ClassKey', 'CalcMass', 'BaseRt', 'TotalSmpIDRate(%)'] + \
                                           ['MeanArea[' + sample + ']' for sample in self.experiment.full_samples_list]]
                 clean_df = pd.concat([clean_df, isolated_df], axis=0)
+             
+            # consider 'C' species only for SM and LPC
+            temp_df = a_df[a_df['TotalGrade'].isin(['C'])]   
+            for lipid in temp_df[temp_df['ClassKey'].isin(['LPC', 'SM'])]['LipidMolec'].unique():
+                if lipid not in clean_df['LipidMolec'].unique():
+                    isolated_df = temp_df[temp_df['LipidMolec'] == lipid] # isolates all datapoints corresponding to the current lipid 
+                    max_peak_quality = max(isolated_df['TotalSmpIDRate(%)'].values)
+                    isolated_df = isolated_df[isolated_df['TotalSmpIDRate(%)'] == max_peak_quality]
+                    isolated_df = isolated_df.iloc[:1]
+                    isolated_df = isolated_df[['LipidMolec', 'ClassKey', 'CalcMass', 'BaseRt', 'TotalSmpIDRate(%)'] + \
+                                              ['MeanArea[' + sample + ']' for sample in self.experiment.full_samples_list]]
+                    clean_df = pd.concat([clean_df, isolated_df], axis=0)
                     
             clean_df = clean_df[['LipidMolec', 'ClassKey', 'CalcMass', 'BaseRt'] + \
                            ['MeanArea[' + sample + ']' for sample in self.experiment.full_samples_list]]
