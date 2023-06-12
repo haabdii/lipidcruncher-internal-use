@@ -205,16 +205,18 @@ if uploaded_f is not None:
                                 index = experiment.conditions_list.index(bqc_label)
                                 filtered_data_object = lp.FilteredData(continuation_df.copy(deep=True), experiment, bqc_label, index)
                                 prepared_df = filtered_data_object.plot_cov()
-                                thresh = st.number_input('Enter the maximum acceptable CoV in %', min_value = 10, max_value = 1000, value = 30, step = 1)
-                                continuation_df = filtered_data_object.filter_df(thresh, prepared_df.copy(deep=True))
-                                st.write('View and download the filtered dataset:')
-                                st.write(continuation_df)
-                                csv_download = convert_df(continuation_df)
-                                st.download_button(
-                                    label="Download Data",
-                                    data=csv_download,
-                                    file_name='filtered_data.csv',
-                                    mime='text/csv')
+                                filter_ans = st.radio('Would you like to filter the data using BQC samples?', ['Yes', 'No'], 1)
+                                if filter_ans == 'Yes':
+                                    thresh = st.number_input('Enter the maximum acceptable CoV in %', min_value = 10, max_value = 1000, value = 30, step = 1)
+                                    continuation_df = filtered_data_object.filter_df(thresh, prepared_df.copy(deep=True))
+                                    st.write('View and download the filtered dataset:')
+                                    st.write(continuation_df)
+                                    csv_download = convert_df(continuation_df)
+                                    st.download_button(
+                                        label="Download Data",
+                                        data=csv_download,
+                                        file_name='filtered_data.csv',
+                                        mime='text/csv')
                                 
                         expand_retention = st.expander('View Retention Time Plots: Check Sanity of Data')
                         with expand_retention:
@@ -286,7 +288,7 @@ if uploaded_f is not None:
                             pca_object = lp.PCA(continuation_df, experiment)
                             pca_object.plot_pca()
                             
-                        st.subheader("3) Data Analysis & Hypothesis Testing")
+                        st.subheader("3) Analyze Data & Test Hypothesis")
                         
                         expand_vol_plot = st.expander("Volcano Plots - Test Hypothesis")
                         with expand_vol_plot:
@@ -404,16 +406,18 @@ if uploaded_f is not None:
                         index = experiment.conditions_list.index(bqc_label)
                         filtered_data_object = lp.FilteredData(continuation_df.copy(deep=True), experiment, bqc_label, index)
                         prepared_df = filtered_data_object.plot_cov()
-                        thresh = st.number_input('Enter the maximum acceptable CoV in %', min_value = 10, max_value = 1000, value = 30, step = 1)
-                        continuation_df = filtered_data_object.filter_df(thresh, prepared_df.copy(deep=True))
-                        st.write('View and download the filtered dataset:')
-                        st.write(continuation_df)
-                        csv_download = convert_df(continuation_df)
-                        st.download_button(
-                            label="Download Data",
-                            data=csv_download,
-                            file_name='filtered_data.csv',
-                            mime='text/csv')
+                        filter_ans = st.radio('Would you like to filter the data using BQC samples?', ['Yes', 'No'], 1)
+                        if filter_ans == 'Yes':
+                            thresh = st.number_input('Enter the maximum acceptable CoV in %', min_value = 10, max_value = 1000, value = 30, step = 1)
+                            continuation_df = filtered_data_object.filter_df(thresh, prepared_df.copy(deep=True))
+                            st.write('View and download the filtered dataset:')
+                            st.write(continuation_df)
+                            csv_download = convert_df(continuation_df)
+                            st.download_button(
+                                label="Download Data",
+                                data=csv_download,
+                                file_name='filtered_data.csv',
+                                mime='text/csv')
                         
                 expand_retention = st.expander('View Retention Time Plots: Check Sanity of Data')
                 with expand_retention:
@@ -485,7 +489,7 @@ if uploaded_f is not None:
                     pca_object = lp.PCA(continuation_df, experiment)
                     pca_object.plot_pca()
                     
-                st.subheader("3) Data Analysis & Hypothesis Testing")
+                st.subheader("3) Analyze Data & Test Hypothesis")
                 
                 expand_vol_plot = st.expander("Volcano Plots - Test Hypothesis")
                 with expand_vol_plot:
@@ -608,15 +612,17 @@ if uploaded_f is not None:
                     index = experiment.conditions_list.index(bqc_label)
                     filtered_data_object = lp.FilteredData(continuation_df.copy(deep=True), experiment, bqc_label, index)
                     prepared_df = filtered_data_object.plot_cov()
-                    thresh = st.number_input('Enter the maximum acceptable CoV in %', min_value = 10, max_value = 1000, value = 30, step = 1)
-                    continuation_df = filtered_data_object.filter_df(thresh, prepared_df.copy(deep=True))
-                    st.write(continuation_df)
-                    csv_download = convert_df(continuation_df)
-                    st.download_button(
-                        label="Download Data",
-                        data=csv_download,
-                        file_name='filtered_data.csv',
-                        mime='text/csv')
+                    filter_ans = st.radio('Would you like to filter the data using BQC samples?', ['Yes', 'No'], 1)
+                    if filter_ans == 'Yes':
+                        thresh = st.number_input('Enter the maximum acceptable CoV in %', min_value = 10, max_value = 1000, value = 30, step = 1)
+                        continuation_df = filtered_data_object.filter_df(thresh, prepared_df.copy(deep=True))
+                        st.write(continuation_df)
+                        csv_download = convert_df(continuation_df)
+                        st.download_button(
+                            label="Download Data",
+                            data=csv_download,
+                            file_name='filtered_data.csv',
+                            mime='text/csv')
                     
             expand_retention = st.expander('View Retention Time Plots: Check Sanity of Data')
             with expand_retention:
@@ -688,7 +694,7 @@ if uploaded_f is not None:
                 pca_object = lp.PCA(continuation_df, experiment)
                 pca_object.plot_pca()
                 
-            st.subheader("3) Data Analysis & Hypothesis Testing")
+            st.subheader("3) Analyze Data & Test Hypothesis")
             st.markdown("""
                         The Data Analysis & Hypothesis Testing submodule allows the user to run statistical analysis on the data and test their hypothesis. 
                         """)
