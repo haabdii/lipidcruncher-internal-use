@@ -4,7 +4,7 @@ import pandas as pd
 import numpy as np
 
 # function for downloading data
-@st.cache
+@st.cache_data
 def convert_df(a_df):
     return a_df.to_csv().encode('utf-8')
 
@@ -16,16 +16,20 @@ st.markdown("""
             """)
 
 st.sidebar.subheader("Upload Data")
+
+@st.cache_data
+def load_data(a_lipid_search_object):
+    return pd.read_csv(a_lipid_search_object)
         
-lipid_search = st.sidebar.file_uploader(label='Upload your LipidSearch 5.0 dataset', type=['csv', 'txt'])
+uploaded_f = st.sidebar.file_uploader(label='Upload your LipidSearch 5.0 dataset', type=['csv', 'txt'])
         
-if lipid_search is not None:
+if uploaded_f is not None:
         
     # build the side bar
     try:
         confirm = None # initializing variable 'confirm' used later for confirming user inputs
         
-        df = pd.read_csv(lipid_search)
+        df = load_data(uploaded_f)
         
         st.sidebar.subheader("Define Experiment")
         
@@ -146,27 +150,6 @@ if lipid_search is not None:
                             data=csv_download,
                             file_name='log_transformed_intsta_df.csv',
                             mime='text/csv')
-            
-        expand_hist = st.expander("View Distributions of AUC: Scan Data & Detect Atypical Patterns")
-        with expand_hist:
-            st.markdown("""
-
-                In a standard LipidSearch dataset, columns "MeanArea[s1]" to "MeanArea[sN]" correspond to Area 
-                Under the Curve (AUC) representing the relative abundance of the lipid species 
-                in samples s1 to sN. 
-                
-                To plot the histograms of AUC, LipidCruncher turns all 0 values (i.e. missing values) to 1 
-                and then log-transforms the whole dataset. This allows the user to visualize what portion of the 
-                values are missing without affecting the distribution (as 1 is orders of magnitude smaller than 
-                the minimum detection threshold by mass spectrometry).
-                
-                Visualize the distribution of AUC's in any of the replicates and look for atypical patterns (e.g. too many missing values):
-
-                """)
-            show_hist = st.checkbox('View the distributions of the Area Under the Curve (AUC)')
-            if show_hist:
-                histogram = lp.Histogram(experiment, X.copy(deep=True))
-                histogram.plot_hist()
                 
         
         continuation_df = X.copy(deep=True)
@@ -205,6 +188,15 @@ if lipid_search is not None:
                                 data=csv_download,
                                 file_name='normalized_data.csv',
                                 mime='text/csv')
+                            
+                        expand_box_plot = st.expander('View Distributions of AUC: Scan Data & Detect Atypical Patterns')
+                        with expand_box_plot:
+                            box_plot_object = lp.BoxPlot(experiment, continuation_df.copy(deep=True))
+                            mean_area_df = box_plot_object.create_mean_area_df(box_plot_object.df, experiment.full_samples_list)
+                            zero_values_percent_list = box_plot_object.calculate_missing_values_percentage(mean_area_df, experiment.full_samples_list)
+                            box_plot_object.plot_missing_values(experiment.full_samples_list, zero_values_percent_list)
+                            st.write('--------------------------------------------------------------------------------')
+                            box_plot_object.plot_box_plot(mean_area_df, experiment.full_samples_list)
                             
                         if (bqc_label is not None): 
                             st.info('BQC samples provide with a great method for filtering lipidomics data!') 
@@ -337,7 +329,7 @@ if lipid_search is not None:
                                 st.error('You need at least two conditions with more than one replicate to create a volcano plot!')
                                 
                         expand_sat_plot = st.expander("Saturation Level Plots - Investigate Saturation Profile of Different Lipid Classes")
-                        with expand_sat_plot:    
+                        with expand_sat_plot:  
                              st.markdown("""
                                          Saturation level plots show the saturation profile of each lipid class. 
                                          First, for each lipid species, the ratio of Saturated Fatty Acids (SFA), Mono Unsaturated \
@@ -361,8 +353,9 @@ if lipid_search is not None:
                                          AUC(SFA), AUC(MUFA) and AUC(PUFA) over all lipid species that belong to that class. 
                                          """)
                                          
+                             selected_conditions_list = st.multiselect('Add or remove conditions', experiment.conditions_list, experiment.conditions_list)
                              sat_plot_object = lp.SaturationPlot(experiment, continuation_df.copy(deep=True))
-                             sat_plot_object.create_saturation_plot()
+                             sat_plot_object.create_saturation_plot(selected_conditions_list)
                              
                         expand_abundance_bar_chart = st.expander("Class Abundance Bar Chart")
                         with expand_abundance_bar_chart:
@@ -371,7 +364,7 @@ if lipid_search is not None:
                                      to that class.  
                                      """)
                                      
-                         selected_conditions_list = st.multiselect('Add or remove conditions', experiment.conditions_list, experiment.conditions_list)
+                         selected_conditions_list = st.multiselect('Add or remove conditions  ', experiment.conditions_list, experiment.conditions_list)
                          selected_classes_list = st.multiselect('Add or remove classes:', list(continuation_df['ClassKey'].value_counts().index), \
                                                                 list(continuation_df['ClassKey'].value_counts().index))
                          mode = st.radio('Select a mode', ('linear scale', 'log2 scale'), 1)
@@ -395,6 +388,15 @@ if lipid_search is not None:
                                 st.error('You need at least two conditions with more than one replicate to create a pathway visualization!')
                             
             if dataset_normality_status == 'No':
+                expand_box_plot = st.expander('View Distributions of AUC: Scan Data & Detect Atypical Patterns')
+                with expand_box_plot:
+                    box_plot_object = lp.BoxPlot(experiment, continuation_df.copy(deep=True))
+                    mean_area_df = box_plot_object.create_mean_area_df(box_plot_object.df, experiment.full_samples_list)
+                    zero_values_percent_list = box_plot_object.calculate_missing_values_percentage(mean_area_df, experiment.full_samples_list)
+                    box_plot_object.plot_missing_values(experiment.full_samples_list, zero_values_percent_list)
+                    st.write('--------------------------------------------------------------------------------')
+                    box_plot_object.plot_box_plot(mean_area_df, experiment.full_samples_list)
+                
                 if (bqc_label is not None): 
                     st.info('BQC samples provide with a great method for filtering lipidomics data!') 
                     expand_filtered_data = st.expander("Filter Data Using BQC Samples")
@@ -526,7 +528,7 @@ if lipid_search is not None:
                         st.error('You need at least two conditions with more than one replicate to create a volcano plot!')
                         
                 expand_sat_plot = st.expander("Saturation Level Plots - Investigate Saturation Profile of Different Lipid Classes")
-                with expand_sat_plot:    
+                with expand_sat_plot:  
                     st.markdown("""
                                 Saturation level plots show the saturation profile of each lipid class. 
                                 First, for each lipid species, the ratio of Saturated Fatty Acids (SFA), Mono Unsaturated \
@@ -550,8 +552,9 @@ if lipid_search is not None:
                                 AUC(SFA), AUC(MUFA) and AUC(PUFA) over all lipid species that belong to that class. 
                                 """)
                                 
+                    selected_conditions_list = st.multiselect('Add or remove conditions', experiment.conditions_list, experiment.conditions_list)
                     sat_plot_object = lp.SaturationPlot(experiment, continuation_df.copy(deep=True))
-                    sat_plot_object.create_saturation_plot()
+                    sat_plot_object.create_saturation_plot(selected_conditions_list)
                     
                 expand_abundance_bar_chart = st.expander("Class Abundance Bar Chart")
                 with expand_abundance_bar_chart:
@@ -560,7 +563,7 @@ if lipid_search is not None:
                                  to that class.  
                                  """)
                                  
-                     selected_conditions_list = st.multiselect('Add or remove conditions', experiment.conditions_list, experiment.conditions_list)
+                     selected_conditions_list = st.multiselect('Add or remove conditions ', experiment.conditions_list, experiment.conditions_list)
                      selected_classes_list = st.multiselect('Add or remove classes:', list(continuation_df['ClassKey'].value_counts().index), \
                                                             list(continuation_df['ClassKey'].value_counts().index))
                      mode = st.radio('Select a mode', ('linear scale', 'log2 scale'), 1)
@@ -588,6 +591,15 @@ if lipid_search is not None:
         else:
             
             st.warning('You do not have any internal standards. LipidCruncher cannot normalize your data!')
+            
+            expand_box_plot = st.expander('View Distributions of AUC: Scan Data & Detect Atypical Patterns')
+            with expand_box_plot:
+                box_plot_object = lp.BoxPlot(experiment, continuation_df.copy(deep=True))
+                mean_area_df = box_plot_object.create_mean_area_df(box_plot_object.df, experiment.full_samples_list)
+                zero_values_percent_list = box_plot_object.calculate_missing_values_percentage(mean_area_df, experiment.full_samples_list)
+                box_plot_object.plot_missing_values(experiment.full_samples_list, zero_values_percent_list)
+                st.write('--------------------------------------------------------------------------------')
+                box_plot_object.plot_box_plot(mean_area_df, experiment.full_samples_list)
             
             if (bqc_label is not None): 
                 st.info('BQC samples provide with a great method for filtering lipidomics data!') 
@@ -746,8 +758,9 @@ if lipid_search is not None:
                              AUC(SFA), AUC(MUFA) and AUC(PUFA) over all lipid species that belong to that class. 
                              """)
                              
+                 selected_conditions_list = st.multiselect('Add or remove conditions', experiment.conditions_list, experiment.conditions_list)
                  sat_plot_object = lp.SaturationPlot(experiment, continuation_df.copy(deep=True))
-                 sat_plot_object.create_saturation_plot()
+                 sat_plot_object.create_saturation_plot(selected_conditions_list)
                  
             expand_abundance_bar_chart = st.expander("Class Abundance Bar Chart")
             with expand_abundance_bar_chart:
