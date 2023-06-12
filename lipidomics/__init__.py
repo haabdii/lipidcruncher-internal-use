@@ -2,7 +2,6 @@ from .experiment import Experiment
 from .group_samples import GroupSamples 
 from .clean_data import CleanData
 from .volcano_plot import VolcanoPlot
-from .histogram import Histogram
 from .data_normalization import NormalizeData
 from .filter_data import FilteredData
 from .retention_time_plot import RetentionTime
