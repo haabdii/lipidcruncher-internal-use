@@ -57,15 +57,17 @@ class NormalizeData:
     
     def normalization(self, a_selected_class_list, an_added_intsta_species_lst, an_intsta_concentration_dict):
         
-        @st.cache
+        @st.cache_data
         def prep_df(a_dataframe, a_selected_class_list):
             return a_dataframe[a_dataframe['ClassKey'].isin(a_selected_class_list)]
         
-        a_selected_df = prep_df(self.df, a_selected_class_list) # normalized dataframe
+        selected_df = prep_df(self.df, a_selected_class_list) # normalized dataframe
         
-        @st.cache
-        def compute_normalized_auc(a_selected_df, a_lipid_class, an_intsta_auc, a_concentration):
-            a_temp_df = a_selected_df[['MeanArea[' + sample + ']' for sample in self.experiment.full_samples_list]][a_selected_df['ClassKey'] == a_lipid_class]\
+        full_samples_list = self.experiment.full_samples_list
+        
+        @st.cache_data
+        def compute_normalized_auc(a_selected_df, a_full_samples_list, a_lipid_class, an_intsta_auc, a_concentration):
+            a_temp_df = a_selected_df[['MeanArea[' + sample + ']' for sample in a_full_samples_list]][a_selected_df['ClassKey'] == a_lipid_class]\
                 .apply(lambda auc: auc / an_intsta_auc * a_concentration, axis=1)
             a_temp_df[['LipidMolec', 'ClassKey', 'CalcMass', 'BaseRt']] = \
                 a_selected_df[['LipidMolec', 'ClassKey', 'CalcMass', 'BaseRt']][a_selected_df['ClassKey'] == a_lipid_class]
@@ -76,7 +78,7 @@ class NormalizeData:
                 concentration = an_intsta_concentration_dict[intsta_species]
                 intsta_auc = self.intsta_df[['MeanArea[' + sample + ']' for sample in self.experiment.full_samples_list]][self.intsta_df['LipidMolec'] == intsta_species]\
                     .values.reshape(len(self.experiment.full_samples_list),)
-                temp = compute_normalized_auc(a_selected_df.copy(deep=True), lipid_class, intsta_auc, concentration)
+                temp = compute_normalized_auc(selected_df.copy(deep=True), full_samples_list, lipid_class, intsta_auc, concentration)
                 temp = temp[['LipidMolec', 'ClassKey', 'CalcMass', 'BaseRt'] + ['MeanArea[' + sample + ']' for sample in self.experiment.full_samples_list]]
                 a_norm_df = pd.concat([a_norm_df, temp], axis=0)
             return a_norm_df 

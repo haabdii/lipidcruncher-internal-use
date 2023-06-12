@@ -9,14 +9,15 @@ class Histogram:
         self.df = a_df 
         
     def plot_hist(self):  
-
-        @st.cache
-        def prep_df():
-            df = self.df[['MeanArea[' + sample + ']' for sample in self.experiment.full_samples_list]] # picks the 'MeanArea[s1]', ..., 'MeanArea[sN]' columns only
-            df = df.mask(df<1).fillna(1)
-            return df
         
-        df = prep_df()
+        main_area_df = self.df[['MeanArea[' + sample + ']' for sample in self.experiment.full_samples_list]] # picks the 'MeanArea[s1]', ..., 'MeanArea[sN]' columns only
+
+        @st.cache_data
+        def prep_df(a_main_area_df):
+            a_prepped_df = a_main_area_df.mask(a_main_area_df<1).fillna(1)
+            return a_prepped_df
+        
+        prepped_df = prep_df(main_area_df)
         total_reps = len(self.experiment.full_samples_list)
         
         # function that prepares the histogram plot
@@ -53,7 +54,7 @@ class Histogram:
                     col1.pyplot(prep_hist(a_dataframe, -1))
             return
         
-        return arrange_hist(df, total_reps)
+        return arrange_hist(prepped_df, total_reps)
     
     
         

@@ -8,17 +8,17 @@ class AbundanceBarChart:
         self.experiment = an_experiment
         self.df = a_df
         
-    @st.cache
-    def convert_df(self, a_dataframe):
+    @st.cache_data
+    def convert_df(_self, a_dataframe):
          return a_dataframe.to_csv().encode('utf-8')
      
-    @st.cache
-    def create_mean_std_columns(self):
-        grouped_df = self.df.groupby('ClassKey')[["MeanArea[" + sample + ']' for sample in self.experiment.full_samples_list]].sum()
-        for index, condition in enumerate(self.experiment.conditions_list):
-            grouped_df["mean_AUC_" + condition] = grouped_df[["MeanArea[" + sample + "]" for sample in self.experiment.individual_samples_list[index]]]\
+    @st.cache_data
+    def create_mean_std_columns(_self, a_df, a_full_samples_list, a_conditions_list, an_individual_samples_list):
+        grouped_df = a_df.groupby('ClassKey')[["MeanArea[" + sample + ']' for sample in a_full_samples_list]].sum()
+        for index, condition in enumerate(a_conditions_list):
+            grouped_df["mean_AUC_" + condition] = grouped_df[["MeanArea[" + sample + "]" for sample in an_individual_samples_list[index]]]\
                 .apply(lambda x: np.mean(x), axis = 1)
-            grouped_df["std_AUC_" + condition] = grouped_df[["MeanArea[" + sample + "]" for sample in self.experiment.individual_samples_list[index]]]\
+            grouped_df["std_AUC_" + condition] = grouped_df[["MeanArea[" + sample + "]" for sample in an_individual_samples_list[index]]]\
                 .apply(lambda x: np.std(x), axis = 1)
             grouped_df["log2_mean_AUC_" + condition] = np.log2(grouped_df["mean_AUC_" + condition].values)
             grouped_df["log2_std_AUC_" + condition] = (np.log2(grouped_df["mean_AUC_" + condition].values + grouped_df["std_AUC_" + condition].values) - \
@@ -27,13 +27,17 @@ class AbundanceBarChart:
     
     def create_abundance_bar_chart(self, a_selected_conditions_list, a_selected_classes_list, a_mode):
         
-        def prep_plot_df():
-            a_temp = self.create_mean_std_columns().copy(deep=True)
+        def prep_plot_df(a_df, a_full_samples_list, a_conditions_list, an_individual_samples_list):
+            a_temp = self.create_mean_std_columns(a_df, a_full_samples_list, a_conditions_list, an_individual_samples_list).copy(deep=True)
             a_temp.reset_index(inplace=True)
             a_temp = a_temp.loc[a_temp['ClassKey'].isin(a_selected_classes_list)]
             return a_temp 
         
-        abundance_df = prep_plot_df()
+        df = self.df
+        conditions_list = self.experiment.conditions_list
+        full_samples_list = self.experiment.full_samples_list
+        individual_samples_list = self.experiment.individual_samples_list
+        abundance_df = prep_plot_df(df, full_samples_list, conditions_list, individual_samples_list)
         
         def render_plot():
             plt.rcdefaults()

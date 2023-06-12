@@ -12,13 +12,13 @@ class PathwayViz:
         self.control = a_control_condition
         self.experimental = an_experimental_condition
         
-    @st.cache
-    def convert_df(self, a_dataframe):
+    @st.cache_data
+    def convert_df(_self, a_dataframe):
          return a_dataframe.to_csv().encode('utf-8')
     
-    @st.cache
     def calculate_class_saturation_ratio(self):
         
+        @st.cache_data
         def calculate_number_of_saturated_and_unsaturated_chains_for_single_species(mol_structure):
             a = mol_structure.split('(')
             b = a[1][:-1]
@@ -39,18 +39,22 @@ class PathwayViz:
                         number_of_unsat_chains += 1
             return number_of_sat_chains, number_of_unsat_chains
         
-        def calculate_total_number_of_saturated_and_unsaturated_chains_for_each_class():
-            self.df['number_of_sat_unsat_chains'] = self.df['LipidMolec'].apply(lambda x: calculate_number_of_saturated_and_unsaturated_chains_for_single_species(x))
-            self.df['number_of_sat_chains'] = self.df['number_of_sat_unsat_chains'].apply(lambda x: x[0])
-            self.df['number_of_unsat_chains'] = self.df['number_of_sat_unsat_chains'].apply(lambda x: x[1])
-            return self.df
-        self.df = calculate_total_number_of_saturated_and_unsaturated_chains_for_each_class()
+        df = self.df.copy(deep=True)
         
-        def add_saturation_ratio_column():
-            saturation_ratio_df = self.df.groupby('ClassKey')[['number_of_sat_chains', 'number_of_unsat_chains']].sum()
+        @st.cache_data
+        def calculate_total_number_of_saturated_and_unsaturated_chains_for_each_class(a_df):
+            a_df['number_of_sat_unsat_chains'] = a_df['LipidMolec'].apply(lambda x: calculate_number_of_saturated_and_unsaturated_chains_for_single_species(x))
+            a_df['number_of_sat_chains'] = a_df['number_of_sat_unsat_chains'].apply(lambda x: x[0])
+            a_df['number_of_unsat_chains'] = a_df['number_of_sat_unsat_chains'].apply(lambda x: x[1])
+            return a_df
+        df = calculate_total_number_of_saturated_and_unsaturated_chains_for_each_class(df)
+        
+        @st.cache_data
+        def add_saturation_ratio_column(a_df):
+            saturation_ratio_df = a_df.groupby('ClassKey')[['number_of_sat_chains', 'number_of_unsat_chains']].sum()
             saturation_ratio_df['saturation_ratio'] = saturation_ratio_df[['number_of_sat_chains', 'number_of_unsat_chains']].apply(lambda x: x[0]/(x[0]+x[1]), axis = 1)
             return saturation_ratio_df
-        saturation_ratio_df = add_saturation_ratio_column()
+        saturation_ratio_df = add_saturation_ratio_column(df)
         saturation_ratio_df.drop(['number_of_sat_chains', 'number_of_unsat_chains'], axis=1, inplace=True)
         
         return saturation_ratio_df
@@ -58,9 +62,14 @@ class PathwayViz:
     
     def calculate_class_fold_change(self):
         
-        @st.cache
-        def calculate_total_class_abundance():
-            return self.df.groupby('ClassKey')[["MeanArea[" + sample + ']' for sample in self.experiment.full_samples_list]].sum()
+        df = self.df
+        full_samples_list = self.experiment.full_samples_list
+        control = self.control
+        experimental = self.experimental
+        
+        @st.cache_data
+        def calculate_total_class_abundance(a_df, a_full_samples_list):
+            return a_df.groupby('ClassKey')[["MeanArea[" + sample + ']' for sample in a_full_samples_list]].sum()
         
         def get_index():
             return self.experiment.conditions_list.index(self.control),\
@@ -72,15 +81,15 @@ class PathwayViz:
                    self.experiment.individual_samples_list[experimental_idx]
         control_samples_list, experimental_samples_list = get_individual_samples_list()
         
-        @st.cache
-        def add_fold_change_column(a_dataframe):
-            a_dataframe['fc_' + self.experimental + '_' + self.control] = \
+        @st.cache_data
+        def add_fold_change_column(a_dataframe, a_control, an_experimental, a_full_samples_list):
+            a_dataframe['fc_' + an_experimental + '_' + a_control] = \
             a_dataframe[['MeanArea[' + sample + ']'  for sample in control_samples_list + experimental_samples_list]]\
             .apply(lambda x: np.mean(x[['MeanArea[' + sample + ']'  for sample in experimental_samples_list]])\
                    / np.mean(x[['MeanArea[' + sample + ']'  for sample in control_samples_list]]), axis = 1)
-            a_dataframe.drop(["MeanArea[" + sample + ']' for sample in self.experiment.full_samples_list], axis=1, inplace=True)
+            a_dataframe.drop(["MeanArea[" + sample + ']' for sample in a_full_samples_list], axis=1, inplace=True)
             return a_dataframe
-        class_fold_change_df = add_fold_change_column(calculate_total_class_abundance().copy(deep=True))
+        class_fold_change_df = add_fold_change_column(calculate_total_class_abundance(df, full_samples_list).copy(deep=True), control, experimental, full_samples_list)
         
         return class_fold_change_df
     
@@ -167,7 +176,6 @@ class PathwayViz:
         
         add_text()
         
-        @st.cache
         def create_pathway_dictionary(a_class_fold_change_df, a_saturation_ratio_df):
             pathway_classes_list = ['TG', 'DG', 'PA', 'LPA', 'LCB', 'Cer', 'SM', 'PE', 'LPE', 'PC', 'LPC', 'PI', 'LPI', 'CDP-DAG', 'PG', 'LPG', 'PS', 'LPS'] 
             pathway_class_fold_change_list = [0] * len(pathway_classes_list)
@@ -184,7 +192,7 @@ class PathwayViz:
         
         pathway_dict = create_pathway_dictionary(a_class_fold_change_df, a_saturation_ratio_df)
         
-        @st.cache
+        @st.cache_data
         def prep_plot_inputs(a_pathway_dict):
             color_contour = a_pathway_dict['saturated fatty acids ratio']
             size = [50*ele**2 for ele in a_pathway_dict['abundance ratio']]

@@ -12,27 +12,28 @@ class PCA:
         self.df = a_df
         self.experiment = an_experiment 
         
-    @st.cache
-    def convert_df(self, a_dataframe):
+    @st.cache_data
+    def convert_df(_self, a_dataframe):
          return a_dataframe.to_csv().encode('utf-8')
+     
+    @st.cache_data
+    def run_pca(_self, a_mean_area_df):
+        Y = a_mean_area_df.T
+        #Y = _self.df[['MeanArea[' + sample + ']' for sample in _self.experiment.full_samples_list]].T
+        Y = scale(Y)
+        pca = decomposition.PCA(n_components=2)
+        pca.fit(Y)
+        scores = pca.transform(Y)
+        explained_variance = pca.explained_variance_ratio_
+        return scores, ['PC'+str(i+1)+' ('+str("{:.0f}".format(explained_variance[i]*100))+'%)' for i in range(2)] # e.g. [PC1 (80%), PC2 (15%)]
     
     def plot_pca(self):
         
-        @st.cache
-        def run_pca():
-            Y = self.df[['MeanArea[' + sample + ']' for sample in self.experiment.full_samples_list]].T
-            Y = scale(Y)
-            pca = decomposition.PCA(n_components=2)
-            pca.fit(Y)
-            scores = pca.transform(Y)
-            explained_variance = pca.explained_variance_ratio_
-            return scores, ['PC'+str(i+1)+' ('+str("{:.0f}".format(explained_variance[i]*100))+'%)' for i in range(2)] # e.g. [PC1 (80%), PC2 (15%)]
-        
-        scores, PC_list = run_pca()
+        mean_area_df = self.df[['MeanArea[' + sample + ']' for sample in self.experiment.full_samples_list]]
+        scores, PC_list = self.run_pca(mean_area_df)
         PCx = scores[:, 0].tolist()
         PCy = scores[:, 1].tolist()
         
-        @st.cache
         def create_plot_inputs():
             color_lst =[ 'red', 'blue', 'green', 'magenta', 'cyan', 'orange', 'black', 'pink', 'brown', 'yellow', 'purple', \
                         'gray', 'olive', 'chocolate', 'silver', 'darkred', 'khaki', 'skyblue', 'navy', 'orchid']

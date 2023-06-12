@@ -13,15 +13,15 @@ class Correlation:
         self.index = an_index
         
     # function for downloading data
-    @st.cache
-    def convert_df(self, some_df):
+    @st.cache_data
+    def convert_df(_self, some_df):
          return some_df.to_csv().encode('utf-8')
         
     def correlation_plot(self):
         mean_area_df = self.df[['MeanArea[' + sample + ']' for sample in self.experiment.individual_samples_list[self.index]]]
         
         # re-naming the columns from MainArea[s1] to s1 etc
-        @st.cache
+        @st.cache_data
         def rename_columns(a_mean_area_df):
             counter = 0
             for column in a_mean_area_df.columns:
@@ -43,7 +43,7 @@ class Correlation:
         
         v_min, thresh = set_color_bar()
         
-        @st.cache
+        @st.cache_data
         def compute_correlation_df(a_mean_area_df):
             return a_mean_area_df.corr()
         

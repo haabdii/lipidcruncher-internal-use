@@ -15,20 +15,20 @@ class VolcanoPlot:
         self.p_value_threshold = a_p_val
         self.q_value_threshold = a_q_val
         
-    @st.cache
-    def convert_df(self, a_dataframe):
+    @st.cache_data
+    def convert_df(_self, a_dataframe):
          return a_dataframe.to_csv().encode('utf-8')
         
     def add_fold_change_and_p_value_columns(self):
         
-        @st.cache
+        @st.cache_data
         def fold_change_calculator(nums_1, nums_2): 
             if np.mean(nums_1) > 0 and np.mean(nums_2) > 0: 
                 return np.log2(np.mean(nums_1)/np.mean(nums_2))
             else:
                 return 0
         
-        @st.cache
+        @st.cache_data
         def p_value_calculator(nums_1, nums_2):
             t_value, p_value = stats.ttest_ind(nums_1,nums_2)
             return p_value
@@ -45,32 +45,35 @@ class VolcanoPlot:
         
         control_samples_list, experimental_samples_list = get_individual_samples_list()
         
-        @st.cache
-        def add_fold_change_column(a_dataframe):
-            a_dataframe['fc_' + self.experimental + '_' + self.control] = \
-            a_dataframe[['MeanArea[' + sample + ']'  for sample in control_samples_list + experimental_samples_list]]\
-            .apply(lambda x: fold_change_calculator(x[['MeanArea[' + sample + ']'  for sample in experimental_samples_list]], \
-                                                    x[['MeanArea[' + sample + ']'  for sample in control_samples_list]]), axis=1)
+        @st.cache_data
+        def add_fold_change_column(a_control_samples_list, a_control, an_experimental, an_experimental_samples_list, a_dataframe):
+            a_dataframe['fc_' + an_experimental + '_' + a_control] = \
+            a_dataframe[['MeanArea[' + sample + ']'  for sample in a_control_samples_list + an_experimental_samples_list]]\
+            .apply(lambda x: fold_change_calculator(x[['MeanArea[' + sample + ']'  for sample in an_experimental_samples_list]], \
+                                                    x[['MeanArea[' + sample + ']'  for sample in a_control_samples_list]]), axis=1)
             return a_dataframe
         
-        @st.cache
-        def add_p_val_column(a_dataframe):
-            a_dataframe['p_val_' + self.experimental + '_' + self.control] = \
-            a_dataframe[['MeanArea[' + sample + ']'  for sample in control_samples_list + experimental_samples_list]]\
-            .apply(lambda x: p_value_calculator(x[['MeanArea[' + sample + ']'  for sample in experimental_samples_list]], \
-                                              x[['MeanArea[' + sample + ']'  for sample in control_samples_list]]), axis=1)
+        @st.cache_data
+        def add_p_val_column(a_control_samples_list, a_control, an_experimental, an_experimental_samples_list, a_dataframe):
+            a_dataframe['p_val_' + an_experimental + '_' + a_control] = \
+            a_dataframe[['MeanArea[' + sample + ']'  for sample in a_control_samples_list + an_experimental_samples_list]]\
+            .apply(lambda x: p_value_calculator(x[['MeanArea[' + sample + ']'  for sample in an_experimental_samples_list]], \
+                                              x[['MeanArea[' + sample + ']'  for sample in a_control_samples_list]]), axis=1)
             return a_dataframe
         
-        a_volcano_df = add_fold_change_column(self.df.copy(deep=True))
-        a_volcano_df = add_p_val_column(a_volcano_df.copy(deep=True))
+        a_volcano_df = add_fold_change_column(control_samples_list, self.control, self.experimental, experimental_samples_list, self.df.copy(deep=True))
+        a_volcano_df = add_p_val_column(control_samples_list, self.control, self.experimental, experimental_samples_list, a_volcano_df.copy(deep=True))
         
         return a_volcano_df
     
     def create_volcano_plot(self, a_volcano_df, a_selected_classes_list):
         
+        a_volcano_df['fc_' + self.experimental + '_' + self.control].fillna(value=0, inplace=True)
+        a_volcano_df['p_val_' + self.experimental + '_' + self.control].fillna(value=0, inplace=True)
+        
         fold_change_list = a_volcano_df['fc_' + self.experimental + '_' + self.control].values
         
-        @st.cache
+        @st.cache_data
         def find_fold_change_axis_limit(a_fold_change_list):
             if len([x for x in a_fold_change_list if x != 0]) > 0:
                 max_fold_change = np.max([x for x in a_fold_change_list if x != 0])
@@ -83,15 +86,17 @@ class VolcanoPlot:
         
         q_values_list = a_volcano_df['p_val_' + self.experimental + '_' + self.control].values
         
-        @st.cache
+        @st.cache_data
         def find_q_value_axis_limit(a_q_values_list):
-            return -np.log10(np.min(a_q_values_list))
+            if len([x for x in a_q_values_list if x != 0]) > 0:
+                return -np.log10(np.min([x for x in a_q_values_list if x != 0]))
+            else:
+                return 1
         
         q_value_axis_limit = find_q_value_axis_limit(q_values_list)
         
-        
-        @st.cache
-        def build_plot_df():
+        @st.cache_data
+        def build_plot_df(a_volcano_dataframe, a_selected_classes_lst, an_experimental, a_control):
             unique_color_lst =[ 'red', 'blue', 'green', 'magenta', 'cyan', 'orange', 'black', 'pink', 'brown', 'yellow', 'purple', \
                                 'gray', 'olive', 'chocolate', 'silver', 'darkred', 'khaki', 'skyblue', 'navy', 'orchid', 'deepskyblue', \
                                 'tan', 'lime', 'tomato', 'deeppink', 'lavender', 'salmon', 'darkkhaki', 'lavenderblush', 'indigo']
@@ -100,16 +105,17 @@ class VolcanoPlot:
             class_lst = []
             color_lst = []
             species = []
-            for lipid_class in a_selected_classes_list:
-                fc = fc + a_volcano_df[a_volcano_df['ClassKey'] == lipid_class]['fc_' + self.experimental + '_' + self.control].values.tolist()
-                pval = pval + a_volcano_df[a_volcano_df['ClassKey'] == lipid_class]['p_val_' + self.experimental + '_' + self.control].values.tolist()
-                color_lst = color_lst + [unique_color_lst[a_selected_classes_list.index(lipid_class)] for i in range(len(a_volcano_df[a_volcano_df['ClassKey'] == lipid_class]))]
-                class_lst = class_lst + [lipid_class for i in range(len(a_volcano_df[a_volcano_df['ClassKey'] == lipid_class]))]
-                species = species + a_volcano_df[a_volcano_df['ClassKey'] == lipid_class]['LipidMolec'].values.tolist()
+            for lipid_class in a_selected_classes_lst:
+                fc = fc + a_volcano_dataframe[a_volcano_dataframe['ClassKey'] == lipid_class]['fc_' + an_experimental + '_' + a_control].values.tolist()
+                pval = pval + a_volcano_dataframe[a_volcano_dataframe['ClassKey'] == lipid_class]['p_val_' + an_experimental + '_' + a_control].values.tolist()
+                color_lst = color_lst + \
+                    [unique_color_lst[a_selected_classes_lst.index(lipid_class)] for i in range(len(a_volcano_dataframe[a_volcano_dataframe['ClassKey'] == lipid_class]))]
+                class_lst = class_lst + [lipid_class for i in range(len(a_volcano_dataframe[a_volcano_dataframe['ClassKey'] == lipid_class]))]
+                species = species + a_volcano_dataframe[a_volcano_dataframe['ClassKey'] == lipid_class]['LipidMolec'].values.tolist()
             a_plot_df = pd.DataFrame({"FC": fc, "qvalue": -np.log10(pval), "Species": species, "Class": class_lst, "Color": color_lst})
             return a_plot_df
         
-        plot_df = build_plot_df()
+        plot_df = build_plot_df(a_volcano_df, a_selected_classes_list, self.experimental, self.control)
         
         def render_plot(a_plot_df):
             a_plot = figure(title='Volcano Plot', x_axis_label='Fold Change (' + self.experimental + '/' + self.control + ')', y_axis_label='q-value')

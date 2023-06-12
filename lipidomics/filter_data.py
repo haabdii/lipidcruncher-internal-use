@@ -12,8 +12,8 @@ class FilteredData:
         self.condition = a_condition
         self.index = an_index
         
-    @st.cache
-    def cov_calculator(self, numbers): 
+    @st.cache_data
+    def cov_calculator(_self, numbers): 
          non_zero_lst = [number for number in numbers if (number>0)]
          if len(non_zero_lst) > 1:
              cov = (np.std(non_zero_lst)/np.mean(non_zero_lst))*100
@@ -21,8 +21,8 @@ class FilteredData:
              cov = None
          return cov
      
-    @st.cache
-    def mean_calculator(self, numbers): 
+    @st.cache_data
+    def mean_calculator(_self, numbers): 
          non_zero_lst = [number for number in numbers if (number>0)]
          if len(non_zero_lst) > 1:
              mean = np.mean(non_zero_lst)
@@ -30,13 +30,17 @@ class FilteredData:
              mean = None
          return mean
      
+    @st.cache_data
+    def log_transform(_self, number): 
+         return np.log10(number)
+     
      # function for downloading data
-    @st.cache
-    def convert_df(self, a_dataframe):
+    @st.cache_data
+    def convert_df(_self, a_dataframe):
          return a_dataframe.to_csv().encode('utf-8')
      
-    @st.cache
-    def prep_plot_inputs(self, a_dataframe):
+    @st.cache_data
+    def prep_plot_inputs(_self, a_dataframe):
         x = a_dataframe['mean'].values
         y = a_dataframe['cov'].values
         species = a_dataframe['LipidMolec'].values
@@ -66,11 +70,11 @@ class FilteredData:
                 mime='text/csv')
             return 
         
-    @st.cache
     def prep_df(self, a_dataframe, an_auc_list):
         a_dataframe['cov'] = a_dataframe[an_auc_list].apply(lambda x: self.cov_calculator(x), axis=1)
         a_dataframe['mean'] = a_dataframe[an_auc_list].apply(lambda x: self.mean_calculator(x), axis=1)
-        a_dataframe['mean'] = a_dataframe['mean'].apply(lambda x: np.log10(x))
+        #a_dataframe['mean'] = a_dataframe['mean'].apply(lambda x: np.log10(x))
+        a_dataframe['mean'] = a_dataframe['mean'].apply(lambda x: self.log_transform(x))
         return a_dataframe 
     
     def plot_cov(self):
@@ -82,8 +86,8 @@ class FilteredData:
         self.display_plot(plot)
         return prepared_df
     
-    @st.cache
-    def filter_df(self, a_thresh, a_prepared_df):
+    @st.cache_data
+    def filter_df(_self, a_thresh, a_prepared_df):
         a_prepared_df = a_prepared_df.loc[a_prepared_df['cov'] <= a_thresh] # removes datapoints with CoV > thresh
         a_prepared_df.drop(['mean', 'cov'], axis=1, inplace=True)
         return a_prepared_df

@@ -10,14 +10,14 @@ class RetentionTime:
         self.experiment = an_experiment
         
    # function for downloading data
-    @st.cache
-    def convert_df(self, some_df):
+    @st.cache_data
+    def convert_df(_self, some_df):
         return some_df.to_csv().encode('utf-8')
         
-    @st.cache
-    def prep_single_plot_inputs(self, a_lipid_class):
-        return self.df[self.df['ClassKey'] == a_lipid_class]['BaseRt'].values, self.df[self.df['ClassKey'] == a_lipid_class]['CalcMass'].values, \
-               self.df[self.df['ClassKey'] == a_lipid_class]['LipidMolec'].values
+    @st.cache_data
+    def prep_single_plot_inputs(_self, a_lipid_class):
+        return _self.df[_self.df['ClassKey'] == a_lipid_class]['BaseRt'].values, _self.df[_self.df['ClassKey'] == a_lipid_class]['CalcMass'].values, \
+               _self.df[_self.df['ClassKey'] == a_lipid_class]['LipidMolec'].values
                
     def render_single_plot(self, a_retention_df, a_lipid_class):
         src = ColumnDataSource(a_retention_df)
@@ -43,17 +43,17 @@ class RetentionTime:
         st.write("----------------------------------------------------------------------------------------------------")
         return 
     
-    @st.cache
-    def prep_multi_plot_input(self, a_selected_classes_list, a_unique_color_list):
+    @st.cache_data
+    def prep_multi_plot_input(_self, a_selected_classes_list, a_unique_color_list):
         retention = []
         mass = []
         class_lst = []
         color_lst = []
         for lipid_class in a_selected_classes_list:
-            retention = retention + self.df[self.df['ClassKey'] == lipid_class]['BaseRt'].values.tolist()
-            mass = mass + self.df[self.df['ClassKey'] == lipid_class]['CalcMass'].values.tolist()
-            class_lst = class_lst + self.df[self.df['ClassKey'] == lipid_class]['ClassKey'].values.tolist()
-            color_lst = color_lst + [a_unique_color_list[a_selected_classes_list.index(lipid_class)] for i in range(len(self.df[self.df['ClassKey'] == lipid_class]))]
+            retention = retention + _self.df[_self.df['ClassKey'] == lipid_class]['BaseRt'].values.tolist()
+            mass = mass + _self.df[_self.df['ClassKey'] == lipid_class]['CalcMass'].values.tolist()
+            class_lst = class_lst + _self.df[_self.df['ClassKey'] == lipid_class]['ClassKey'].values.tolist()
+            color_lst = color_lst + [a_unique_color_list[a_selected_classes_list.index(lipid_class)] for i in range(len(_self.df[_self.df['ClassKey'] == lipid_class]))]
         return retention, mass, class_lst, color_lst
     
     def render_multi_plot(self, a_retention_df):

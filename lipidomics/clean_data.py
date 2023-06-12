@@ -33,7 +33,7 @@ class CleanData:
             df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
         
         # removes the datapoint if 'TotalGrade' = C or D
-        @st.cache
+        @st.cache_data
         def apply_filter(a_df):
             return a_df[a_df['TotalGrade'].isin(['A', 'B', 'C'])]
         
@@ -46,7 +46,7 @@ class CleanData:
             fatty_acids_list.sort()
             return fatty_acids_list
         
-        @st.cache
+        @st.cache_data
         def add_FAKey_column(a_df):
             a_df['FAKey'] = a_df['LipidMolec'].apply(lambda x: extract_fatty_acids(x))
             return a_df
@@ -72,7 +72,7 @@ class CleanData:
                 corrected_lipid_molec += '+' + attributes_list[2].split('+')[1]
             return corrected_lipid_molec
         
-        @st.cache
+        @st.cache_data
         def correct_lipid_molec_column(a_df):
             a_df['LipidMolec_modified'] = a_df[['ClassKey', 'FAKey', 'LipidMolec']].apply(lambda x: correct_single_lipid_molec(x), axis=1)
             a_df.drop(columns='LipidMolec', inplace=True)
@@ -81,7 +81,7 @@ class CleanData:
         
         corrected_df = correct_lipid_molec_column(df_with_FAKey.copy(deep=True))
         
-        @st.cache
+        @st.cache_data
         # function that picks the lipid species with highest quality peak (highest TotalSmpIDRate for each unique lipid) 
         def select_AUC(a_df):
             clean_df = pd.DataFrame(columns = ['LipidMolec', 'ClassKey', 'CalcMass', 'BaseRt', 'TotalSmpIDRate(%)'] + \
@@ -117,17 +117,17 @@ class CleanData:
         return cleaned_df
     
         # function to extract the internal standards dataframe from the cleaned dataset  
-    @st.cache
-    def extract_internal_standards(self, a_clean_df):
+    @st.cache_data
+    def extract_internal_standards(_self, a_clean_df):
             intsta_index_lst = [index for index, lipid in enumerate(a_clean_df['LipidMolec'].values.tolist()) if '(s)' in lipid]
             intsta_df = a_clean_df.iloc[intsta_index_lst, :]
             a_clean_df.drop(intsta_index_lst,0,inplace=True) # removes the internal standard rows from the dataset
             return a_clean_df, intsta_df
     
         # function to log transform the abundance columns of the df
-    @st.cache
-    def log_transform_df(self, a_clean_df):  
-            auc = ['MeanArea[' + sample +']' for sample in self.experiment.full_samples_list]
+    @st.cache_data
+    def log_transform_df(_self, a_clean_df):  
+            auc = ['MeanArea[' + sample +']' for sample in _self.experiment.full_samples_list]
             a_clean_df[auc] = a_clean_df[auc].mask(a_clean_df[auc]<1).fillna(1) # filling zero values with 1's to avoid infinity
             a_clean_df[auc] = a_clean_df[auc].apply(lambda x: np.log10(x), axis=0)
             return a_clean_df

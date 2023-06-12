@@ -11,3 +11,4 @@ from .pca import PCA
 from .saturation_plot import SaturationPlot
 from .abundance_bar_chart import AbundanceBarChart
 from .pathway_viz import PathwayViz
+from .box_plot import BoxPlot
