@@ -33,7 +33,7 @@ class BoxPlot:
     def plot_box_plot(_self, a_mean_area_df, a_full_samples_list):
         x = []
         for sample in a_full_samples_list:
-            x.append(list(np.log10(a_mean_area_df[a_mean_area_df['MeanArea[' + sample + ']'] > 0]['MeanArea[' + sample + ']'].values)))
+            x.append(list(np.log10(a_mean_area_df[a_mean_area_df['MeanArea[' + sample + ']'] > 0.0]['MeanArea[' + sample + ']'].values)))
         
         plt.rcdefaults()
         fig, ax = plt.subplots()
