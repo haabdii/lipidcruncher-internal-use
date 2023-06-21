@@ -199,8 +199,7 @@ if uploaded_f is not None:
                             box_plot_object.plot_box_plot(mean_area_df, experiment.full_samples_list)
                             
                         if (bqc_label is not None): 
-                            st.info('BQC samples provide with a great method for filtering lipidomics data!') 
-                            expand_filtered_data = st.expander("Filter Data Using BQC Samples")
+                            expand_filtered_data = st.expander("Check Consistency of Readngs Using BQC Samples")
                             with expand_filtered_data:
                                 index = experiment.conditions_list.index(bqc_label)
                                 filtered_data_object = lp.FilteredData(continuation_df.copy(deep=True), experiment, bqc_label, index)
@@ -400,8 +399,7 @@ if uploaded_f is not None:
                     box_plot_object.plot_box_plot(mean_area_df, experiment.full_samples_list)
                 
                 if (bqc_label is not None): 
-                    st.info('BQC samples provide with a great method for filtering lipidomics data!') 
-                    expand_filtered_data = st.expander("Filter Data Using BQC Samples")
+                    expand_filtered_data = st.expander("Check Consistency of Readngs Using BQC Samples")
                     with expand_filtered_data:
                         index = experiment.conditions_list.index(bqc_label)
                         filtered_data_object = lp.FilteredData(continuation_df.copy(deep=True), experiment, bqc_label, index)
@@ -606,8 +604,7 @@ if uploaded_f is not None:
                 box_plot_object.plot_box_plot(mean_area_df, experiment.full_samples_list)
             
             if (bqc_label is not None): 
-                st.info('BQC samples provide with a great method for filtering lipidomics data!') 
-                expand_filtered_data = st.expander("Filter Data Using BQC Samples")
+                expand_filtered_data = st.expander("Check Consistency of Readngs Using BQC Samples")
                 with expand_filtered_data:
                     index = experiment.conditions_list.index(bqc_label)
                     filtered_data_object = lp.FilteredData(continuation_df.copy(deep=True), experiment, bqc_label, index)
