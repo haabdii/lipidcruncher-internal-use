@@ -73,7 +73,6 @@ class FilteredData:
     def prep_df(self, a_dataframe, an_auc_list):
         a_dataframe['cov'] = a_dataframe[an_auc_list].apply(lambda x: self.cov_calculator(x), axis=1)
         a_dataframe['mean'] = a_dataframe[an_auc_list].apply(lambda x: self.mean_calculator(x), axis=1)
-        #a_dataframe['mean'] = a_dataframe['mean'].apply(lambda x: np.log10(x))
         a_dataframe['mean'] = a_dataframe['mean'].apply(lambda x: self.log_transform(x))
         return a_dataframe 
     
@@ -84,6 +83,14 @@ class FilteredData:
         x, y, species = self.prep_plot_inputs(prepared_df)
         plot = self.render_plot(x, y, species)
         self.display_plot(plot)
+        reliable_data_percent = round(len(prepared_df[prepared_df['cov'] < 30]) / len(prepared_df) * 100, 1)
+        if reliable_data_percent >= 80:
+            st.info(str(reliable_data_percent) + "% of the datapoints are highly reliable (CoV < 30%).")
+        elif reliable_data_percent < 80 and reliable_data_percent >= 50:
+            st.warning(str(reliable_data_percent) + "% of the datapoints are highly reliable (CoV < 30%).")
+        else:
+            st.error(str(reliable_data_percent) + "% of the datapoints are highly reliable (CoV < 30%).")
+            
         return prepared_df
     
     @st.cache_data
